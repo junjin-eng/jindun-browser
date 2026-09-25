@@ -1,0 +1,114 @@
+{
+  "name": "jindun-browser",
+  "productName": "JindunBrowser",
+  "version": "1.0.1",
+  "description": "槿盾浏览器 - 指纹浏览器客户端",
+  "main": "src/main.js",
+  "author": "Jindun Team",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64",
+    "dist:portable": "electron-builder --win portable --x64",
+    "dist:mac": "electron-builder --mac --x64 --arm64"
+  },
+  "devDependencies": {
+    "@electron/asar": "^3.4.1",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy-agent": "^7.0.2",
+    "https-proxy-agent": "^7.0.4",
+    "node-fetch": "^2.7.0",
+    "proxy-chain": "^1.0.4",
+    "puppeteer-core": "^22.6.0",
+    "socks-proxy-agent": "^8.0.2"
+  },
+  "build": {
+    "appId": "com.jindun.browser",
+    "asar": true,
+    "asarUnpack": [],
+    "directories": {
+      "output": "dist-build-332564148"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "jindun-browser-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "jindun-browser-${version}-${arch}-portable.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Jindun Browser",
+      "uninstallDisplayName": "Jindun Browser"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "jindun-browser-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "title": "Jindun Browser",
+      "window": {
+        "width": 540,
+        "height": 380
+      },
+      "contents": [
+        {
+          "x": 120,
+          "y": 170,
+          "type": "file"
+        },
+        {
+          "x": 420,
+          "y": 170,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>槿盾浏览器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 登录视图 -->
+<div id="view-login" class="login-wrap">
+  <div class="login-card">
+    <h2>槿盾浏览器</h2>
+    <p class="sub">浏览器环境隔离 · 隐私保护工具</p>
+    <div class="seg">
+      <button id="seg-login" class="active">登录</button>
+      <button id="seg-register">注册</button>
+    </div>
+    <input id="lg-user" placeholder="用户名">
+    <input id="lg-pass" type="password" placeholder="密码">
+    <input id="lg-email" class="hidden" placeholder="邮箱（选填）">
+    <div id="lg-sec" class="hidden">
+      <input id="lg-q" placeholder="安全问题（用于找回密码，可选）">
+      <input id="lg-a" type="password" placeholder="安全答案（用于找回密码）">
+      <p class="tiny">忘记密码时可通过「用户名 + 安全问题 + 安全答案」重设。留空表示暂不开启此找回方式。</p>
+    </div>
+    <button id="lg-btn" class="btn primary full">登 录</button>
+    <p class="tiny" style="text-align:right;margin:4px 0 0"><a href="javascript:void(0)" id="lg-forgot">忘记密码？</a>　<a href="javascript:void(0)" id="lg-srv-btn">⚙ 服务器设置</a></p>
+    <p id="lg-msg" class="msg"></p>
+    <p class="tiny">登录即代表同意《用户协议》与《免责声明》：本工具仅为环境隔离工具，不保证账号不被平台封禁，请遵守各平台协议与法律法规。</p>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="view-app" class="app hidden">
+  <aside class="sidebar">
+    <div class="logo">槿盾浏览器</div>
+    <div class="quota-box" id="quota-box">
+      <div id="q-user"></div>
+      <div class="q-row">窗口 <b id="q-profiles">-</b></div>
+      <div class="q-row">今日打开 <b id="q-opens">-</b></div>
+      <div class="q-row">并发 <b id="q-conc">-</b></div>
+      <div class="q-row">套餐到期 <b id="q-exp">-</b></div>
+    </div>
+    <nav>
+      <a data-tab="profiles" class="active">环境列表</a>
+      <a data-tab="proxy">代理管理</a>
+      <a data-tab="tpl">模板管理</a>
+      <a data-tab="plans">套餐购买</a>
+      <a data-tab="team">团队协作</a>
+      <a data-tab="admin" id="nav-admin" class="hidden">👑 用户管理</a>
+      <a data-tab="settings">软件设置</a>
+      <a data-tab="apidoc">API文档</a>
+    </nav>
+    <div class="side-foot"><button id="btn-logout" class="btn small">退出登录</button></div>
+  </aside>
+
+  <main class="main">
+    <!-- 环境列表 -->
+    <section id="tab-profiles" class="tab">
+      <div id="announce-box" class="panel hidden" style="border-left:4px solid #2563eb">
+        <h3 style="display:flex;align-items:center;gap:8px">📢 公告栏 <button class="btn small" id="btn-announce-refresh" title="刷新公告">刷新</button></h3>
+        <div id="announce-list"></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="btn-new">新建环境</button>
+        <button class="btn" id="btn-import">导入</button>
+        <button class="btn" id="btn-export">导出</button>
+        <button class="btn" id="btn-hidden">显示已隐藏</button>
+        <button class="btn" id="btn-trash">回收站</button>
+        <input id="search" placeholder="搜索名称/标签" class="search">
+        <span class="flex1"></span>
+        <button class="btn" id="btn-batch-open">批量启动</button>
+        <button class="btn" id="btn-batch-close">批量关闭</button>
+        <button class="btn danger" id="btn-batch-del">批量删除</button>
+      </div>
+      <table id="tb-profiles">
+        <thead><tr>
+          <th style="width:36px"><input type="checkbox" id="ck-all"></th>
+          <th>ID</th><th>名称</th><th>归属</th><th>标签</th><th>代理</th><th>共享</th><th>状态</th><th>最近打开</th><th style="width:130px">操作</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- 代理管理 -->
+    <section id="tab-proxy" class="tab hidden">
+      <div class="toolbar">
+        <button class="btn primary" id="btn-proxy-add">＋ 新建代理</button>
+        <button class="btn" id="btn-proxy-import">批量导入（粘贴）</button>
+        <button class="btn" id="btn-proxy-test">连通性测试（选中代理）</button>
+        <span class="tiny" style="margin-left:auto">💡 创建/编辑环境时填入的代理会自动进入代理池，方便下次复用</span>
+      </div>
+      <div id="proxy-editor" class="panel hidden">
+        <div class="row">
+          <label class="inline">别名</label><input id="pxp-label" placeholder="可选，例如「香港-测试节点」" style="max-width:180px">
+          <label class="inline">协议</label>
+          <select id="pxp-type">
+            <option value="1">HTTP</option><option value="2">HTTPS</option><option value="3">SOCKS5</option>
+          </select>
+          <label class="inline">主机</label><input id="pxp-host" placeholder="代理服务器主机" style="max-width:200px">
+          <label class="inline">端口</label><input id="pxp-port" type="number" placeholder="端口" style="max-width:100px">
+          <label class="inline">账号</label><input id="pxp-user" placeholder="可选" style="max-width:140px">
+          <label class="inline">密码</label><input id="pxp-pass" type="password" placeholder="可选" style="max-width:140px">
+          <button class="btn primary" id="pxp-save">保存</button>
+          <button class="btn" id="pxp-cancel">取消</button>
+        </div>
+      </div>
+      <table id="tb-proxy"><thead><tr>
+        <th>别名</th><th>协议</th><th>主机</th><th>账号</th><th>创建时间</th><th>操作</th>
+      </tr></thead><tbody></tbody></table>
+      <div class="panel" id="proxy-result" style="max-height:200px;overflow:auto"></div>
+    </section>
+
+    <!-- 模板管理 -->
+    <section id="tab-tpl" class="tab hidden">
+      <div class="toolbar">
+        <button class="btn primary" id="btn-new-tpl">新建模板</button>
+        <button class="btn" id="btn-tpl-from-profile">从选中环境保存为模板</button>
+        <span class="tiny" style="margin-left:auto">模板是一份指纹参数预设，可一键应用到多个环境</span>
+      </div>
+      <table id="tb-tpl"><thead><tr><th>名称</th><th>UA</th><th>时区</th><th>操作</th></tr></thead><tbody></tbody></table>
+    </section>
+
+    <!-- 套餐购买 -->
+    <section id="tab-plans" class="tab hidden">
+      <div class="toolbar"><h3 style="margin:0">套餐购买</h3><span class="hint">支付为模拟通道，下单后点「立即支付」即时生效；真实支付接入后流程不变</span></div>
+      <div id="plan-cards" class="plan-cards"></div>
+      <div class="panel">
+        <h3>我的订单</h3>
+        <table id="tb-myorders"><thead><tr>
+          <th>订单号</th><th>套餐</th><th>金额</th><th>状态</th><th>下单时间</th><th>支付时间</th><th>到期时间</th><th>操作</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+    </section>
+
+    <!-- 团队协作 -->
+    <section id="tab-team" class="tab hidden">
+      <div id="team-none" class="panel">
+        <div class="team-cols">
+          <div>
+            <h3>创建团队</h3>
+            <p class="tiny">创建后你将成为团队创建者，可邀请成员加入、共享浏览器环境。</p>
+            <div class="row"><input id="team-create-name" placeholder="团队名称" style="flex:1"><button class="btn primary" id="btn-team-create">创建</button></div>
+          </div>
+          <div>
+            <h3>加入团队</h3>
+            <p class="tiny">向团队创建者索取 6 位邀请码，加入后可看到并启动团队共享环境。</p>
+            <div class="row"><input id="team-join-code" placeholder="邀请码" style="flex:1;text-transform:uppercase"><button class="btn primary" id="btn-team-join">加入</button></div>
+          </div>
+        </div>
+      </div>
+      <div id="team-view" class="hidden">
+        <div class="panel">
+          <div class="team-head">
+            <h3 id="team-name">-</h3>
+            <div class="row">
+              <span class="hint">我的角色：<b id="team-myrole">-</b></span>
+            </div>
+          </div>
+          <div class="row" id="team-switcher" style="flex-wrap:wrap"></div>
+          <div class="row" style="margin-top:6px">
+            <button class="btn small" id="btn-team-new2">＋ 创建新团队</button>
+            <button class="btn small" id="btn-team-join2">加入其他团队</button>
+            <span class="hint">一人可创建/加入多个团队，上方切换「当前使用」的团队，环境列表只显示当前团队的共享环境</span>
+          </div>
+          <div id="team-new-form" class="hidden" style="margin:8px 0;padding:10px;background:#f9fafb;border-radius:8px">
+            <div class="row"><input id="team-create-name2" placeholder="新团队名称" style="flex:1;max-width:260px">
+              <button class="btn small primary" id="btn-team-create2">创建</button>
+              <button class="btn small" id="btn-team-new2-cancel">取消</button></div>
+          </div>
+          <div id="team-join-form" class="hidden" style="margin:8px 0;padding:10px;background:#f9fafb;border-radius:8px">
+            <div class="row"><input id="team-join-code2" placeholder="输入6位邀请码" style="flex:1;max-width:260px;text-transform:uppercase">
+              <button class="btn small primary" id="btn-team-join2-go">加入</button>
+              <button class="btn small" id="btn-team-join2-cancel">取消</button></div>
+          </div>
+          <div class="row">
+            <label class="inline" style="margin:0">邀请码：</label>
+            <code id="team-code" style="font-size:16px;font-weight:bold;letter-spacing:2px">------</code>
+            <button class="btn small" id="btn-team-copy">复制</button>
+            <button class="btn small" id="btn-team-rotate">重置邀请码</button>
+          </div>
+          <div class="row"><span class="hint" id="team-usage"></span></div>
+          <div class="row" id="team-owner-actions">
+            <button class="btn danger" id="btn-team-disband">解散团队</button>
+          </div>
+          <div class="row" id="team-member-actions">
+            <button class="btn" id="btn-team-leave">退出团队</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>成员管理</h3>
+          <table id="tb-members"><thead><tr>
+            <th>用户名</th><th>角色</th><th>加入时间</th><th>克隆授权</th><th>操作</th>
+          </tr></thead><tbody></tbody></table>
+          <p class="tiny">「克隆授权」由创建者控制：授权后成员才可把共享环境克隆为自己的私有环境。</p>
+        </div>
+        <div class="panel" id="grant-panel">
+          <h3>环境使用授权</h3>
+          <p class="tiny">控制哪些团队成员可以看到并启动你的共享环境。不勾选任何成员 = 全体成员可用。</p>
+          <button class="btn primary" id="btn-grant-open">打开授权管理</button>
+        </div>
+
+        <dialog id="dlg-grant" class="dlg dlg-grant">
+          <div class="dlg-head"><h3>授权成员</h3><button class="dlg-x" id="gl-x">✕</button></div>
+          <div class="grant-layout">
+            <div class="grant-col grant-envs">
+              <div class="gl-title">🗂 共享环境</div>
+              <div id="gl-env-list" class="gl-env-list"></div>
+            </div>
+            <div class="grant-col grant-mid">
+              <div class="gl-title">所有成员</div>
+              <input id="gl-search" class="gl-search" placeholder="搜索成员">
+              <label class="inline gl-all"><input type="checkbox" id="gl-all"> 全选</label>
+              <div id="gl-members" class="gl-members"></div>
+            </div>
+            <div class="grant-col grant-sel">
+              <div class="gl-title">已选择成员(<span id="gl-sel-count">0</span>) <a href="javascript:void(0)" id="gl-clear" class="gl-clear">清空已选</a></div>
+              <div id="gl-selected" class="gl-chips"></div>
+              <p class="tiny" id="gl-hint">不勾选任何成员 = 全体成员可用</p>
+            </div>
+          </div>
+          <div class="dlg-foot">
+            <button class="btn" id="gl-cancel">取消</button>
+            <button class="btn primary" id="gl-save">确定</button>
+          </div>
+        </dialog>
+        <div class="panel">
+          <h3>环境共享说明</h3>
+          <ul class="tiny" style="margin-left:16px;line-height:2">
+            <li>一人可加入/创建<b>多个团队</b>，在上方团队列表中随时切换「当前使用」的团队；环境列表只显示当前团队的共享环境。</li>
+            <li>在「环境列表」编辑环境时勾选「共享到我的团队」，成员即可在自己的环境列表看到并启动该环境；创建者可在此页用「环境使用授权」按成员精细授权。</li>
+            <li>共享环境的Cookie/缓存：任意成员（含创建者）关闭窗口时自动经 <b>AES-256-GCM加密</b> 上传服务器，其他成员启动该环境时自动拉取解密使用，实现登录态互通；加密密钥按环境隔离，服务端无法查看明文。</li>
+            <li>所有成员共享团队的打开次数：成员启动共享环境消耗<b>团队创建者</b>的套餐配额（每日/并发），上方显示团队共享用量。</li>
+            <li>成员「克隆为私有」需创建者授权；共享环境仅创建者可编辑/删除。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 软件设置 -->
+    <section id="tab-settings" class="tab hidden">
+      <div class="panel form">
+        <h3>基础设置</h3>
+        <label>服务端地址</label><input id="st-server">
+        <label>Chromium内核路径（留空自动检测本机Chrome/Edge）</label>
+        <div class="row"><input id="st-chrome"><button class="btn" id="st-detect">自动检测</button><button class="btn" id="st-chrome-pick">选择</button></div>
+        <label>本地API服务端口</label><input id="st-port" type="number">
+        <label>本地API Token（自动化接口鉴权）</label><input id="st-token" readonly>
+        <label>本地数据存储路径（每个环境独立子文件夹：Cookie/缓存/下载文件互不混淆，仅保存在本地不上传）</label>
+        <div class="row"><input id="st-datapath"><button class="btn" id="st-data-pick">选择</button><button class="btn" id="st-data-open">打开目录</button></div>
+        <div class="row"><input type="checkbox" id="st-geo"><label class="inline">启动实例时自动 GeoIP 匹配时区/语言/经纬度（推荐）</label></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="st-logs-dir">📂 打开运行日志目录</button>
+          <span class="tiny">每次关闭环境浏览器时，本次运行日志会自动保存为 .log 文本文件</span>
+        </div>
+        <button class="btn primary" id="st-save">保存设置</button>
+        <span id="st-msg" class="msg"></span>
+      </div>
+      <div class="panel form">
+        <h3>账号安全</h3>
+        <div class="row"><span class="hint">当前登录账号：</span><b id="sec-user">-</b></div>
+        <label>密码找回安全问题</label>
+        <div class="row"><b id="sec-q-current" class="hint">（尚未设置）</b><span class="tiny">留空并保存可清除安全问题</span></div>
+        <div class="row">
+          <input id="sec-q-new" placeholder="设置/修改安全问题" style="flex:1" value="">
+        </div>
+        <div class="row">
+          <input id="sec-a-new" type="password" placeholder="安全答案" style="flex:1">
+          <input id="sec-a-new2" type="password" placeholder="再次确认" style="flex:1">
+          <button class="btn" id="sec-q-save">保存安全问题</button>
+        </div>
+        <hr style="border:0;border-top:1px dashed #e5e7eb;margin:14px 0">
+        <label>修改密码</label>
+        <input id="pwd-cur" type="password" placeholder="当前密码">
+        <div class="row">
+          <input id="pwd-new" type="password" placeholder="新密码（至少6位）" style="flex:1">
+          <input id="pwd-new2" type="password" placeholder="再次确认新密码" style="flex:1">
+          <button class="btn primary" id="pwd-save">修改密码</button>
+        </div>
+        <span id="pwd-msg" class="msg"></span>
+      </div>
+      <div class="panel form">
+        <h3>版本与更新</h3>
+        <div class="row"><label class="inline" style="margin:0">客户端版本：</label><b id="upd-cur">-</b><span class="flex1"></span>
+          <button class="btn primary" id="btn-check-update">检查更新</button>
+        </div>
+        <div id="upd-result" class="msg" style="min-height:20px;white-space:pre-wrap"></div>
+        <p class="tiny">检查更新会从服务端获取最新版本信息；有新版本时点「立即更新」，下载解压后客户端自动重启完成升级。浏览器内核（支持多版本/自动跟随谷歌更新）请在下方「浏览器内核管理」面板操作。</p>
+      </div>
+      <div class="panel form">
+        <h3>🌐 浏览器内核管理（多版本 · 自动跟随谷歌更新）</h3>
+        <div class="km-toolbar row">
+          <label class="inline">默认内核</label>
+          <select id="km-default" class="km-sel"></select>
+          <span class="flex1"></span>
+          <input type="checkbox" id="km-auto">
+          <label class="inline" for="km-auto">自动跟随谷歌 Stable 更新</label>
+          <select id="km-source" class="km-sel">
+            <option value="auto">下载源：智能切换</option>
+            <option value="mirror">国内镜像（推荐）</option>
+            <option value="official">谷歌官方</option>
+          </select>
+          <button class="btn" id="km-check">检查更新</button>
+          <button class="btn" id="km-dir">📂 内核目录</button>
+        </div>
+        <div class="tiny" id="km-eff" style="margin:6px 0"></div>
+        <div id="km-prog" class="km-prog hidden">
+          <div class="km-prog-track"><div class="km-prog-bar" id="km-prog-bar"></div></div>
+          <span id="km-prog-txt">准备下载…</span>
+        </div>
+
+        <h4 class="km-h4">谷歌官方频道（Chrome for Testing 绿色免安装）
+          <button class="btn small" id="km-refresh">刷新版本列表</button>
+        </h4>
+        <table class="gl-table" id="km-channels">
+          <thead><tr><th style="width:160px">通道</th><th>最新版本</th><th style="width:200px">状态 / 操作</th></tr></thead>
+          <tbody><tr><td colspan="3" class="hint">点「刷新版本列表」从谷歌官方接口获取最新版本</td></tr></tbody>
+        </table>
+
+        <h4 class="km-h4">已安装内核（每个环境可在「指纹设置 → 浏览器内核」里单独选择）</h4>
+        <table class="gl-table" id="km-installed">
+          <thead><tr><th>版本</th><th style="width:120px">来源通道</th><th style="width:110px">占用空间</th><th style="width:160px">安装时间</th><th style="width:210px">操作</th></tr></thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="row km-hist">
+          <button class="btn small" id="km-hist-btn">加载历史版本</button>
+          <select id="km-hist-sel" class="km-sel hidden"></select>
+          <button class="btn small primary hidden" id="km-hist-install">安装所选版本</button>
+        </div>
+        <p class="tiny">说明：内核全部来自 Google 官方 <b>Chrome for Testing</b>（与正式版 Chrome 相同内核，绿色免安装、不影响本机 Chrome）。开启自动更新后每天检测一次稳定版，谷歌发布新版即后台自动下载，下次启动环境自动启用，不影响正在运行的浏览器。国内无法直连谷歌时，下载源选「国内镜像」。每个内核约占 300MB，不用的版本可删除；所有内置核都删除后会自动回退到系统安装的 Chrome/Edge。</p>
+      </div>
+      <div class="panel">
+        <h3>运行日志</h3>
+        <div id="log-view" class="log"></div>
+      </div>
+    </section>
+
+    <!-- 用户管理（仅 role=1 可见） -->
+    <section id="tab-admin" class="tab hidden">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h3 style="margin:0">👑 管理后台 · 用户列表</h3>
+          <div class="row">
+            <button class="btn small" id="admin-refresh">🔄 刷新</button>
+            <button class="btn small" id="admin-open-web">🌐 打开完整后台</button>
+          </div>
+        </div>
+        <input id="admin-search" class="gl-search" placeholder="搜索用户名 / 邮箱">
+        <table class="gl-table" id="tb-admin-users">
+          <thead><tr>
+            <th>ID</th><th>用户名</th><th>邮箱</th><th>套餐</th><th>窗口上限</th><th>每日打开</th>
+            <th>安全问题</th><th>状态</th><th>注册时间</th><th>操作</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- API文档 -->
+    <section id="tab-apidoc" class="tab hidden">
+      <div class="panel doc">
+        <h3>本地自动化 API（兼容 Puppeteer / Playwright）</h3>
+        <p>Base URL: <code id="doc-base">http://127.0.0.1:8848</code>　鉴权头：<code>X-Local-Token: &lt;设置页Token&gt;</code></p>
+<pre>
+GET  /health                              健康检查
+GET  /api/v1/profiles                     环境列表
+POST /api/v1/profiles/:id/start           启动实例，返回 { wsEndpoint }（CDP WebSocket 地址）
+POST /api/v1/profiles/:id/stop            停止实例
+POST /api/v1/profiles/batch-start         { "ids": [1,2,3] }
+POST /api/v1/profiles/batch-stop          { "ids": [1,2,3] }
+GET  /api/v1/profiles/running             运行中实例
+POST /api/v1/profiles/extensions          { "ids": [1,2], "extensions": ["C:\\ext\\dir"] }
+</pre>
+        <h4>Puppeteer 连接示例</h4>
+<pre>
+const puppeteer = require('puppeteer-core');
+const res = await fetch('http://127.0.0.1:8848/api/v1/profiles/1/start', {
+  method: 'POST', headers: { 'X-Local-Token': '你的Token' }
+}).then(r =&gt; r.json());
+const browser = await puppeteer.connect({ browserWSEndpoint: res.wsEndpoint, defaultViewport: null });
+</pre>
+        <h4>Playwright 连接示例</h4>
+<pre>
+const { chromium } = require('playwright');
+const browser = await chromium.connectOverCDP(res.wsEndpoint);
+</pre>
+        <h3>技术限制说明</h3>
+        <ul>
+          <li>JS 层无法修改 TLS JA3/JA4 网络层指纹，该指纹由内核网络栈决定。</li>
+          <li>IP 与时区必须匹配：使用代理时请开启 GeoIP 自动匹配，否则 UA/GPU/时区/IP 地域互相矛盾易被识别。</li>
+          <li>禁止大幅修改 Unix 绝对时间戳（本产品仅调整时区偏移展示，不篡改 Date.now()）。</li>
+          <li>SOCKS5 带用户名密码认证时 Chrome 原生不支持，建议使用免认证代理或 IP 白名单。</li>
+          <li>本工具不提供绕过平台风控的功能，不承诺账号永不封禁。</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 行操作下拉菜单（环境列表 ⋮ 按钮） -->
+<div id="row-menu" class="row-menu hidden"></div>
+
+<!-- Cookie 管理弹窗 -->
+<dialog id="dlg-cookie" class="dlg-cookie">
+  <h3>Cookie 管理 · <span id="ck-pname"></span></h3>
+  <p class="tiny">JSON 数组格式（兼容 EditThisCookie 导出）：每项含 <code>name</code>、<code>value</code>、<code>domain</code>、<code>path</code>，可选 <code>expirationDate</code>（秒级时间戳）、<code>httpOnly</code>、<code>secure</code>、<code>sameSite</code>。环境<b>运行中</b>可点<b>「📥 读取浏览器Cookie」</b>直接抓取浏览器内各网站的真实 Cookie（含登录后下发的 Cookie，打开弹窗时也会自动读取）；保存后<b>下次启动该环境时自动注入</b>，登录态直接生效。导入他人浏览器的 Cookie 后建议先点<b>「🔧 一键自动修复」</b>，自动处理域名、过期时间、SameSite 兼容、重复项等问题。</p>
+  <div class="row">
+    <button class="btn primary" id="ck-read-live" disabled title="请先启动该环境，再读取浏览器内当前的真实Cookie">📥 读取浏览器Cookie</button>
+    <button class="btn" id="ck-import-file">从文件导入</button>
+    <button class="btn" id="ck-export">导出到文件</button>
+    <button class="btn primary" id="ck-fix">🔧 一键自动修复</button>
+    <button class="btn danger" id="ck-clear">清空内容</button>
+    <span class="flex1"></span>
+    <span class="hint" id="ck-count"></span>
+  </div>
+  <div id="ck-fix-rpt" class="fix-rpt hidden"></div>
+  <textarea id="ck-text" rows="16" spellcheck="false"
+    placeholder='[&#10;  {&#10;    "name": "sessionid",&#10;    "value": "abc123",&#10;    "domain": ".example.com",&#10;    "path": "/",&#10;    "httpOnly": true,&#10;    "secure": true,&#10;    "sameSite": "Lax"&#10;  }&#10;]'></textarea>
+  <div class="dlg-foot">
+    <button class="btn" id="ck-cancel">关闭</button>
+    <button class="btn primary" id="ck-save">保存（下次启动生效）</button>
+  </div>
+</dialog>
+
+<!-- 环境编辑弹窗 -->
+<dialog id="dlg-profile">
+  <h3 id="dlg-title">新建环境</h3>
+  <div class="dlg-tabs">
+    <button data-dt="basic" class="active">基础</button>
+    <button data-dt="fp">指纹参数</button>
+    <button data-dt="proxy">代理</button>
+    <button data-dt="adv">高级设置</button>
+  </div>
+  <div class="dlg-body">
+    <div id="dt-basic" class="dt-page">
+      <label>环境名称</label><input id="pf-name" placeholder="如：店铺-A">
+      <label>标签（逗号分隔）</label><input id="pf-tags" placeholder="运营,重要">
+      <div class="row">
+        <div><label>加载模板</label>
+          <select id="pf-tpl"><option value="">不加载</option></select>
+        </div>
+      </div>
+      <div class="row"><input type="checkbox" id="pf-standalone"><label class="inline">单机模式（Cookie/缓存仅存本机：不上传云同步、不共享给团队）</label></div>
+      <div class="row"><input type="checkbox" id="pf-share"><label class="inline">共享到我的团队（成员可启动该环境；关闭窗口时Cookie经AES-256加密上传云端，成员启动时自动拉取；打开次数消耗团队创建者配额）</label></div>
+      <p class="tiny">单机模式与团队共享互斥；共享环境的Cookie/缓存全程AES-256-GCM加密传输与存储，服务端无法查看明文。</p>
+    </div>
+    <div id="dt-fp" class="dt-page hidden">
+      <div class="row" style="margin-bottom:8px"><button class="btn primary" id="fp-random">一键随机指纹</button><span class="tiny">时区/语言/经纬度与代理IP绑定，不参与随机</span></div>
+      <div class="grid2">
+        <div><label>User-Agent</label><input id="fp-ua" placeholder="留空使用内核默认"></div>
+        <div><label>浏览器版本</label><input id="fp-ver" placeholder="120"></div>
+        <div><label>浏览器内核（Chrome 内核版本）</label>
+          <select id="fp-kernel"><option value="">自动（跟随默认内核/最新版）</option><option value="system">系统安装的 Chrome/Edge</option></select>
+        </div>
+        <div><label>操作系统平台 (navigator.platform)</label><input id="fp-platform" placeholder="Win32"></div>
+        <div><label>语言 locale</label><input id="fp-lang" placeholder="zh-CN"></div>
+        <div><label>IANA时区</label><input id="fp-tz" placeholder="Asia/Shanghai"></div>
+        <div><label>时区偏移(分钟, 如UTC+8=-480)</label><input id="fp-tzo" type="number" placeholder="-480"></div>
+        <div><label>屏幕宽度</label><input id="fp-sw" type="number" placeholder="1920"></div>
+        <div><label>屏幕高度</label><input id="fp-sh" type="number" placeholder="1080"></div>
+        <div><label>色深</label><input id="fp-cd" type="number" placeholder="24"></div>
+        <div><label>设备像素比</label><input id="fp-dpr" type="number" step="0.1" placeholder="1"></div>
+        <div><label>CPU核心数</label><input id="fp-cores" type="number" placeholder="8"></div>
+        <div><label>内存(deviceMemory GB)</label><input id="fp-mem" type="number" placeholder="8"></div>
+        <div><label>WebGL UNMASKED_VENDOR</label><input id="fp-glvendor" placeholder="Google Inc. (NVIDIA)"></div>
+        <div><label>WebGL UNMASKED_RENDERER</label><input id="fp-glrenderer" placeholder="ANGLE (NVIDIA, GeForce GTX 1650...)"></div>
+      </div>
+      <div class="row">
+        <input type="checkbox" id="fp-canvas"><label class="inline">Canvas指纹噪声</label>
+        <input type="checkbox" id="fp-audio"><label class="inline">AudioContext指纹噪声</label>
+      </div>
+      <div class="grid2">
+        <div><label>Canvas噪声种子</label><input id="fp-cseed" type="number" placeholder="随机"></div>
+        <div><label>WebRTC</label><select id="fp-webrtc"><option value="real">允许（可能泄漏本机IP）</option><option value="disabled">引擎级防护（保留原生API、仅拦截真实IP，推荐）</option></select></div>
+      </div>
+      <label>字体指纹（逗号分隔允许列表，留空不修改）</label><input id="fp-fonts" placeholder="Arial, Microsoft YaHei, SimSun">
+      <div class="grid2">
+        <div><label>JS经纬度 - 纬度</label><input id="fp-lat" type="number" step="0.0001" placeholder="31.2304"></div>
+        <div><label>JS经纬度 - 经度</label><input id="fp-lng" type="number" step="0.0001" placeholder="121.4737"></div>
+      </div>
+      <div class="row"><input type="checkbox" id="fp-ch"><label class="inline">启用 Client Hints（userAgentData）</label>
+        <input type="checkbox" id="fp-ch-mobile"><label class="inline">移动设备</label></div>
+      <p class="tiny">参数需逻辑自洽：UA / 平台 / GPU / 时区 / 语言 / IP地域应互相匹配，否则易被网站检测。</p>
+    </div>
+    <div id="dt-proxy" class="dt-page hidden">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <label style="margin:0;font-weight:600">代理配置</label>
+        <div style="display:flex;gap:6px">
+          <button class="btn small" id="px-pool-btn">📚 从代理池选择</button>
+          <button class="btn small" id="px-pool-save-btn">💾 保存当前代理到代理池</button>
+        </div>
+      </div>
+      <label>代理类型</label>
+      <select id="px-type">
+        <option value="0">不使用代理</option>
+        <option value="1">HTTP</option>
+        <option value="2">HTTPS</option>
+        <option value="3">SOCKS5</option>
+      </select>
+      <div class="grid2">
+        <div><label>地址</label><input id="px-host" placeholder="proxy.example.com"></div>
+        <div><label>端口</label><input id="px-port" type="number" placeholder="1080"></div>
+        <div><label>用户名</label><input id="px-user"></div>
+        <div><label>密码</label><input id="px-pass" type="password"></div>
+      </div>
+      <button class="btn" id="px-test">测试此代理连通性</button>
+      <div id="px-result" class="msg"></div>
+      <p class="tiny">启动实例时将通过此代理读取出口IP，自动填充对应时区/语言/经纬度（可在设置页关闭）。动态代理每次换IP后重启实例即自动更新。</p>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <label style="font-weight:600">固定出口IP监控</label>
+        <input id="px-fixed-ip" placeholder="留空=不校验；填写后启动时强制校验出口IP必须等于此值，否则阻止打开" style="width:100%">
+        <p class="tiny" style="margin-top:4px">💡 填写后，每次启动都会检测实际出口IP。若代理IP发生变化（如动态代理换IP），将阻止打开环境，避免在错误IP下操作。</p>
+      </div>
+    </div>
+    <div id="dt-adv" class="dt-page hidden">
+      <label>浏览器扩展（本地目录，已加载）</label>
+      <div id="ext-list" class="ext-list"></div>
+      <button class="btn" id="ext-add">添加扩展目录</button>
+      <label>自定义DNS（host映射，如 api.example.com → 1.2.3.4）</label>
+      <div id="dns-list" class="ext-list"></div>
+      <button class="btn" id="dns-add">添加DNS映射</button>
+      <p class="tiny">数据存储：默认情况下Cookie/localStorage仅保存在本地磁盘；团队共享环境会加密云同步。勾选「单机模式」后该环境永远不上传、不共享。不同环境数据完全隔离。</p>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" id="dlg-cancel">取消</button>
+    <button class="btn primary" id="dlg-save">保存</button>
+  </div>
+</dialog>
+
+<!-- 代理池选择弹窗（在创建/编辑环境的代理 Tab 点击「从代理池选择」时打开） -->
+<dialog id="dlg-proxy-pool" class="dlg" style="width:720px">
+  <div class="dlg-head"><h3>选择代理池中的代理</h3><button class="dlg-x" id="pp-x">✕</button></div>
+  <input id="pp-search" class="gl-search" placeholder="搜索代理（名称 / 主机）">
+  <div class="panel" id="pp-list" style="max-height:380px;overflow:auto"></div>
+  <div class="dlg-foot">
+    <span class="tiny" id="pp-hint" style="margin-right:auto"></span>
+    <button class="btn" id="pp-cancel">取消</button>
+    <button class="btn primary" id="pp-ok">应用到当前环境</button>
+  </div>
+</dialog>
+
+<!-- 忘记密码 -->
+<dialog id="dlg-forgot" class="dlg">
+  <div class="dlg-head"><h3>找回密码（安全问题验证）</h3><button class="dlg-x" id="fg-x">✕</button></div>
+  <div class="dlg-body">
+    <label>用户名</label><input id="fg-user" placeholder="要找回的账号">
+    <label>安全问题</label>
+    <div class="row">
+      <input id="fg-q" placeholder="输入账号设置的安全问题（首次填写）" style="flex:1">
+      <button class="btn" id="fg-q-fill" disabled>自动填入（查询账号的安全问题）</button>
+    </div>
+    <label>安全答案</label><input id="fg-a" placeholder="安全问题的答案" type="password">
+    <label>新密码（至少6位）</label><input id="fg-new" type="password">
+    <label>再次确认新密码</label><input id="fg-new2" type="password">
+    <p class="tiny">如果账号从未设置过密码找回安全问题，无法通过本渠道找回——请联系管理员重置。</p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" id="fg-cancel">取消</button>
+    <button class="btn primary" id="fg-submit">重设密码</button>
+  </div>
+</dialog>
+
+<!-- 登录页 · 服务器设置 -->
+<dialog id="dlg-srv" class="dlg" style="width:520px">
+  <div class="dlg-head"><h3>服务器设置</h3><button class="dlg-x" id="srv-x">✕</button></div>
+  <div class="dlg-body">
+    <label>服务端地址（必须含端口，结尾不要带 / ）</label>
+    <input id="srv-url" placeholder="https://jindun.ganot.cn:25410">
+    <p class="tiny">示例：https://jindun.ganot.cn:25410<br>修改后点「保存」立即生效，无需重启软件。连不上服务器时，先检查地址是否填对。</p>
+    <p class="msg" id="srv-msg"></p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn" id="srv-cancel">取消</button>
+    <button class="btn primary" id="srv-save">保存</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-logs" class="dlg" style="width:760px">
+  <div class="dlg-head"><h3>运行日志（每次关闭浏览器自动保存）</h3><button class="dlg-x" id="logs-x">✕</button></div>
+  <div class="dlg-body">
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn" id="logs-refresh">🔄 刷新</button>
+      <button class="btn" id="logs-folder">📂 打开日志文件夹</button>
+    </div>
+    <table class="tb" style="width:100%">
+      <thead><tr><th>日志文件</th><th>大小</th><th>生成时间</th><th>操作</th></tr></thead>
+      <tbody id="logs-tb"></tbody>
+    </table>
+  </div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
